@@ -3,7 +3,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     const captureButton = document.getElementById("capture");
     const errorMessage = document.getElementById("mensaje");
     const cameraIcon = document.getElementById("camera-icon");
-    const photoContainer = document.getElementById("photo-container");
     const loginForm = document.getElementById("login-form");
     const usernameInput = document.getElementById("username");
     const passwordInput = document.getElementById("password");
@@ -37,11 +36,8 @@ document.addEventListener("DOMContentLoaded", async () => {
         try {
             stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
             video.srcObject = stream;
-            video.style.display = "block";
             cameraIcon.style.display = "none";
-            errorMessage.textContent = "";
-        } catch (error) {
-            console.error("Error al acceder a la cámara:", error);
+        } catch {
             errorMessage.textContent = "⚠️ No se pudo acceder a la cámara.";
         }
     }
@@ -56,17 +52,14 @@ document.addEventListener("DOMContentLoaded", async () => {
     captureButton.addEventListener("click", () => {
         if (!isLoggedIn) return alert("Debes iniciar sesión primero");
 
-        const today = new Date().toISOString().split("T")[0];
+        const now = new Date();
+        const today = now.toISOString().split("T")[0];
+        const time = now.toLocaleTimeString();
         const username = usernameInput.value;
 
-        if (attendance.some(record => record.username === username && record.date === today)) {
-            alert("⚠️ Ya has registrado asistencia hoy");
-            return;
-        }
-
-        attendance.push({ username, date: today });
+        attendance.push({ username, date: today, time });
         localStorage.setItem("attendance", JSON.stringify(attendance));
-        alert("✅ Asistencia registrada exitosamente");
+        alert(`✅ Asistencia registrada: ${time}`);
         renderAttendanceTable();
     });
 
@@ -74,7 +67,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         attendanceTable.innerHTML = "";
         attendance.forEach(record => {
             const row = document.createElement("tr");
-            row.innerHTML = `<td>${record.username}</td><td>${record.date}</td>`;
+            row.innerHTML = `<td>${record.username}</td><td>${record.date}</td><td>${record.time}</td>`;
             attendanceTable.appendChild(row);
         });
     }
@@ -83,16 +76,11 @@ document.addEventListener("DOMContentLoaded", async () => {
         const username = usernameInput.value;
         const password = passwordInput.value;
 
-        if (!username || !password) {
-            alert("Por favor, ingrese un usuario y una contraseña");
-            return;
-        }
-
         if (isRegister) {
             if (users[username]) return alert("⚠️ El usuario ya existe");
             users[username] = password;
             localStorage.setItem("users", JSON.stringify(users));
-            alert("✅ Usuario registrado exitosamente");
+            alert("✅ Usuario registrado");
         } else {
             if (users[username] !== password) return alert("⚠️ Credenciales incorrectas");
             isLoggedIn = true;
