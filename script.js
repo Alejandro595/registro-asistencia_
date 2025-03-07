@@ -23,42 +23,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     mainContainer.style.display = "none";
     renderAttendanceTable();
 
-    // Inicio de sesión con texto
-    loginButton.addEventListener("click", () => {
-        const username = usernameInput.value;
-        const password = passwordInput.value;
-        
-        if (users[username] && users[username] === password) {
-            isLoggedIn = true;
-            loginForm.style.display = "none";
-            mainContainer.style.display = "block";
-            startCamera();
-        } else {
-            alert("Credenciales incorrectas");
-        }
-    });
+    loginButton.addEventListener("click", () => authenticate(false));
+    registerButton.addEventListener("click", () => authenticate(true));
 
-    // Registro con texto
-    registerButton.addEventListener("click", () => {
-        const username = usernameInput.value;
-        const password = passwordInput.value;
-
-        if (!username || !password) {
-            alert("Por favor, ingrese un usuario y una contraseña");
-            return;
-        }
-
-        if (users[username]) {
-            alert("El usuario ya existe");
-            return;
-        }
-
-        users[username] = password;
-        localStorage.setItem("users", JSON.stringify(users));
-        alert("Usuario registrado exitosamente");
-    });
-
-    // Cerrar sesión
     logoutButton.addEventListener("click", () => {
         isLoggedIn = false;
         loginForm.style.display = "block";
@@ -66,7 +33,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         stopCamera();
     });
 
-    // Activar la cámara
     async function startCamera() {
         try {
             stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
@@ -87,13 +53,8 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
     }
 
-    // Registrar asistencia
-    captureButton.addEventListener("click", async () => {
+    captureButton.addEventListener("click", () => {
         if (!isLoggedIn) return alert("Debes iniciar sesión primero");
-        if (!video.srcObject) {
-            alert("La cámara no está activada.");
-            return;
-        }
 
         const today = new Date().toISOString().split("T")[0];
         const username = usernameInput.value;
@@ -118,48 +79,26 @@ document.addEventListener("DOMContentLoaded", async () => {
         });
     }
 
-    // 🔹 Reconocimiento de voz para iniciar sesión
-    voiceLoginButton.addEventListener("click", () => {
-        startVoiceRecognition((user, pass) => {
-            if (users[user] && users[user] === pass) {
-                isLoggedIn = true;
-                loginForm.style.display = "none";
-                mainContainer.style.display = "block";
-                startCamera();
-            } else {
-                alert("⚠️ Usuario o contraseña incorrectos.");
-            }
-        });
-    });
+    function authenticate(isRegister) {
+        const username = usernameInput.value;
+        const password = passwordInput.value;
 
-    // 🔹 Reconocimiento de voz para registro
-    voiceRegisterButton.addEventListener("click", () => {
-        startVoiceRecognition((user, pass) => {
-            if (users[user]) {
-                alert("⚠️ El usuario ya existe.");
-                return;
-            }
-            users[user] = pass;
+        if (!username || !password) {
+            alert("Por favor, ingrese un usuario y una contraseña");
+            return;
+        }
+
+        if (isRegister) {
+            if (users[username]) return alert("⚠️ El usuario ya existe");
+            users[username] = password;
             localStorage.setItem("users", JSON.stringify(users));
-            alert("✅ Usuario registrado con éxito.");
-        });
-    });
-
-    // 🔹 Función para iniciar el reconocimiento de voz
-    function startVoiceRecognition(callback) {
-        const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-        recognition.lang = "es-ES";
-
-        recognition.start();
-        recognition.onresult = event => {
-            const transcript = event.results[0][0].transcript.split(" ");
-            const user = transcript[0];
-            const pass = transcript.slice(1).join(" ");
-            callback(user, pass);
-        };
-
-        recognition.onerror = () => {
-            alert("⚠️ No se pudo reconocer la voz.");
-        };
+            alert("✅ Usuario registrado exitosamente");
+        } else {
+            if (users[username] !== password) return alert("⚠️ Credenciales incorrectas");
+            isLoggedIn = true;
+            loginForm.style.display = "none";
+            mainContainer.style.display = "block";
+            startCamera();
+        }
     }
 });
